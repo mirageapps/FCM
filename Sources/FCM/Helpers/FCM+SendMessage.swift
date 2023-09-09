@@ -50,3 +50,42 @@ extension FCM {
         }
     }
 }
+
+
+extension FCM {
+    public  func sendData(_ message: FCMMessageData) -> EventLoopFuture<String> {
+        guard let configuration = self.configuration else {
+            fatalError("FCM not configured. Use app.fcm.configuration = ...")
+        }
+        let url = actionsBaseURL + configuration.projectId + "/messages:send"
+        return getAccessToken().flatMap { accessToken -> EventLoopFuture<ClientResponse> in
+            var headers = HTTPHeaders()
+            headers.bearerAuthorization = .init(token: accessToken)
+            
+            return self.client.post(URI(string: url), headers: headers) { (req) in
+                struct Payload: Content {
+                    let message: FCMMessageData
+                }
+                let payload = Payload(message: message)
+                try req.content.encode(payload)
+            }
+        }
+        .validate()
+        .flatMapThrowing { res in
+            struct Result: Decodable {
+                let name: String
+            }
+            let result = try res.content.decode(Result.self)
+            return result.name
+        }
+    }
+}
+
+public struct FCMMessageData: Codable {
+    let data: [String: String]
+    let token: String
+    public init(data: [String : String], token: String) {
+        self.data = data
+        self.token = token
+    }
+}
