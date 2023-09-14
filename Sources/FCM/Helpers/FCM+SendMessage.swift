@@ -83,9 +83,13 @@ extension FCM {
 
 public struct FCMMessageData: Codable {
     let data: [String: String]
-    let token: String
+    //let token: String
+    let content_available: Bool
+    let to: String
     public init(data: [String : String], token: String) {
         self.data = data
-        self.token = token
+        //self.token = token
+        self.content_available = true
+        self.to = token
     }
 }
